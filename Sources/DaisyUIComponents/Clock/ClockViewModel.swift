@@ -45,6 +45,7 @@ public class ClockViewModel : ObservableObject, Identifiable {
     @Published public var showClockHourText = true
     @Published public var showItems = true
     @Published public var showTimeSpan = true
+    @Published public var showShadow:Bool = true
     @Published public var secondsHandImage:Image
     @Published public var minutesHandImage:Image
     @Published public var hoursHandImage:Image
@@ -57,6 +58,10 @@ public class ClockViewModel : ObservableObject, Identifiable {
     @Published public var itemBorderColor:Color
     @Published public var timeSpanBackgroundColor:Color
     @Published public var timeSpanColor:Color
+    @Published public var timeLock:Date? = nil
+    @Published public var horizontalMorningLabel:String = "Morgon"
+    @Published public var horizontalNowLabel:String = "Nu"
+    @Published public var horizontalEveningLabel:String = "Kväll"
     public init(bundle:Bundle? = nil, items:[ClockItem] = [], dayStarts:String = "08:00", dayEnds:String = "17:00") {
         let bundle:Bundle = bundle ?? Bundle.module
         self.items = items
@@ -78,7 +83,7 @@ public class ClockViewModel : ObservableObject, Identifiable {
     }
     static var dummyModel:ClockViewModel {
         let m = ClockViewModel()
-        m.showTimeSpan = false
+        m.showTimeSpan = true
         m.items = [
             .init(id: "1", emoji: "🧣", date: relativeDateFrom(time: "08:00"), text: "Test", color: Color("ClockSecondsHandColor", bundle:Bundle.module)),
             .init(id: "2", emoji: "☔️", date: relativeDateFrom(time: "11:00"), text: "Test", color: Color("ClockHoursHandColor", bundle:Bundle.module)),
@@ -87,5 +92,11 @@ public class ClockViewModel : ObservableObject, Identifiable {
             //.init(id: "5", emoji: "💁", date: relativeDateFrom(time: "03:00"), text: "Test", color: Color.gray)
         ]
         return m
+    }
+    var currentAngle:ClockAngle {
+        if let d = timeLock {
+            return ClockAngle.angle(from: d)
+        }
+        return ClockAngle.now
     }
 }
