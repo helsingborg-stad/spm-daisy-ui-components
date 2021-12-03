@@ -3,15 +3,17 @@ import Combine
 
 
 public struct ClockBaseView: View {
-    @EnvironmentObject var viewModel:ClockViewModel
-    @State var watch = ClockAngle.now
+    @ObservedObject var viewModel:ClockViewModel
+    @State var angle:ClockAngle
     let timer = Timer.publish(every: 0.5, on: .current, in: .common).autoconnect()
     var hours:[Int] {
         self.viewModel.militaryTime && Date().hour > 11 ? (13...24).reversed() : (1...12).reversed()
     }
     var size:CGFloat
-    init(size:CGFloat) {
+    init(_ viewModel:ClockViewModel, size:CGFloat) {
         self.size = size
+        self.angle = viewModel.currentAngle
+        self.viewModel = viewModel
     }
     public var body: some View {
         ZStack() {
@@ -48,35 +50,42 @@ public struct ClockBaseView: View {
             self.viewModel.hoursHandImage
                 .resizable()
                 .zIndex(3)
-                .rotationEffect(self.watch.hour)
+                .rotationEffect(self.angle.hour)
                 .foregroundColor(self.viewModel.hoursHandColor)
                 .frame(width:handSize, height:handSize)
-            
             self.viewModel.minutesHandImage
                 .resizable()
                 .zIndex(4)
-                .rotationEffect(self.watch.minute)
+                .rotationEffect(self.angle.minute)
                 .foregroundColor(self.viewModel.minutesHandColor)
                 .frame(width:handSize, height:handSize)
             if self.viewModel.showClockSeconds {
                 self.viewModel.secondsHandImage
                     .resizable()
                     .zIndex(5)
-                    .rotationEffect(self.watch.second)
+                    .rotationEffect(self.angle.second)
                     .foregroundColor(self.viewModel.secondsHandColor)
                     .frame(width:handSize, height:handSize)
             }
         }
         .background(Circle().fill(self.viewModel.faceColor))
+        
         .aspectRatio(1, contentMode: .fit)
         .onReceive(timer) { _ in
-            self.watch = ClockAngle.now
+            if viewModel.timeLock != nil {
+                return
+            }
+            angle = viewModel.currentAngle
+        }.onReceive(viewModel.$timeLock) { lock in
+            withAnimation {
+                angle = viewModel.currentAngle
+            }
         }
     }
 }
 
 struct WatchView_Previews: PreviewProvider {
     static var previews: some View {
-        ClockBaseView(size:375).environmentObject(ClockViewModel())
+        ClockBaseView(ClockViewModel(),size:375)
     }
 }

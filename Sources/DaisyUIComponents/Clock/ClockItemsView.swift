@@ -4,14 +4,15 @@ public typealias ClockItemsBorderSize = CGFloat
 public typealias ClockItemAction = (ClockItem) -> Void
 
 public struct ClockItemsView<CenterContent: View>: View {
-    @EnvironmentObject var viewModel: ClockViewModel
+    @ObservedObject var viewModel: ClockViewModel
     let center: (ClockItemsCenterSize,ClockItemsBorderSize) -> CenterContent
     var action:ClockItemAction? = nil
     let size:CGFloat
-    init(size:CGFloat, action:ClockItemAction? = nil, @ViewBuilder center: @escaping (ClockItemsCenterSize,ClockItemsBorderSize) -> CenterContent) {
+    init(_ viewModel:ClockViewModel ,size:CGFloat, action:ClockItemAction? = nil, @ViewBuilder center: @escaping (ClockItemsCenterSize,ClockItemsBorderSize) -> CenterContent) {
         self.center = center
         self.action = action
         self.size = size
+        self.viewModel = viewModel
     }
     private func scale(for item: ClockItem) -> CGFloat {
         let hours = abs(item.date.timeIntervalSinceNow) / ( 60 * 60)
@@ -60,12 +61,15 @@ public struct ClockItemsView<CenterContent: View>: View {
 struct ClockItemsView_Previews: PreviewProvider {
     static var previews: some View {
         HStack() {
-            ClockItemsView(size: 300, action: { m in
+            let m = ClockViewModel.dummyModel
+            ClockItemsView(m, size: 300, action: { m in
                 
             }, center: { centerSize,borderWidth in
-                ClockBaseView(size: centerSize)
+                ClockBaseView(m, size: centerSize)
+                
             })
-            .environmentObject(ClockViewModel.dummyModel)
+            
+            
             .frame(width: 500, height: 400)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

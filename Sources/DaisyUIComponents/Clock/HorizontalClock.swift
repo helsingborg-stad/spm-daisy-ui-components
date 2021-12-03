@@ -12,7 +12,7 @@ struct TimeLineFont: ViewModifier {
 }
 
 struct TimeLineItemView: View {
-    @EnvironmentObject var viewModel: ClockViewModel
+    @ObservedObject var viewModel: ClockViewModel
     var item: ClockItem
     var selected:Bool = false
     var color:Color {
@@ -56,7 +56,7 @@ struct TimeLineItemView: View {
     }
 }
 struct TimeLinePeripheryView: View {
-    @EnvironmentObject var viewModel: ClockViewModel
+    @ObservedObject var viewModel: ClockViewModel
     var date: Date
     var text: String
     var color:Color
@@ -102,15 +102,25 @@ public struct HorizontalTimeLineView: View {
             return false
         }
     }
-    @EnvironmentObject var viewModel: ClockViewModel
+    @ObservedObject var viewModel: ClockViewModel
     var action:ClockItemAction? = nil
-    public init(_ action:ClockItemAction? = nil) {
+    public init(viewModel:ClockViewModel, _ action:ClockItemAction? = nil) {
+        self.viewModel = viewModel
         self.action = action
+        self.now = Self.calcNow(starts:relativeDateFrom(time: viewModel.dayStarts),ends:relativeDateFrom(time: viewModel.dayEnds))
+    }
+    static func calcNow(starts:Date,ends:Date) -> Date {
+        let now = Date()
+        if starts > now {
+            return starts
+        } else if ends < now {
+            return ends
+        }
+        return now
     }
     @State var now:Date = Date()
     var hours:[Date] {
         var arr = [Date]()
-        
         for t in dayStarts.hour...dayEnds.hour {
             if t < 10 {
                 arr.append(relativeDateFrom(time: "0\(t):00"))
@@ -118,7 +128,7 @@ public struct HorizontalTimeLineView: View {
                 arr.append(relativeDateFrom(time: "\(t):00"))
             }
         }
-        return arr
+        return arr.filter { $0.timeIntervalSince(dayStarts) >= 0 && $0.timeIntervalSince(dayEnds) <= 0 }
     }
     fileprivate func image(_ name:String,color:Color) -> some View {
         return Image(systemName:name).resizable().aspectRatio(contentMode: .fit).frame(width: 30, height: 30).foregroundColor(color)
@@ -141,40 +151,47 @@ public struct HorizontalTimeLineView: View {
                     }
                 }.offset(y:53)
                 TimeLinePeripheryView(
+                    viewModel:viewModel,
                     date: relativeDateFrom(time: timeStringfrom(date: self.dayStarts)),
-                    text: "Morgon",
+                    text: viewModel.horizontalMorningLabel,
                     color:viewModel.timeSpanColor
                 )
                 TimeLinePeripheryView(
+                    viewModel:viewModel,
                     date: relativeDateFrom(time: timeStringfrom(date: self.dayEnds)),
-                    text: "Kväll",
+                    text: viewModel.horizontalEveningLabel,
                     color:viewModel.timeSpanBackgroundColor
                 ).offset(x: proxy.size.width)
+                
                 TimeLinePeripheryView(
+                    viewModel:viewModel,
                     date: self.now,
-                    text: "Nu",
+                    text: viewModel.horizontalNowLabel,
                     color:viewModel.hoursHandColor
                 ).offset(x: proxy.size.width * self.position(for: self.now))
-                ForEach(self.viewModel.items, id: \.self) { item in
-                    TimeLineItemView(item:item, selected:Date() < item.date, action:self.action)
+                ForEach(self.viewModel.items.filter { $0.date.timeIntervalSince(dayStarts) >= 0 && $0.date.timeIntervalSince(dayEnds) <= 0 }, id: \.self) { item in
+                    TimeLineItemView(viewModel:viewModel,item:item, selected:Date() < item.date, action:self.action)
                         .offset(x: proxy.size.width * self.position(for: item.date),y:48)
                 }
             }
             .frame(maxHeight:.infinity,alignment: .topLeading)
             image("sunset",color:viewModel.timeSpanBackgroundColor).offset(y: 58)
         }.frame(height: 183).onReceive(timer) { timer in
-            self.now = Date()
+            self.now = Self.calcNow(starts:relativeDateFrom(time: viewModel.dayStarts),ends:relativeDateFrom(time: viewModel.dayEnds))
         }
     }
 }
 
 struct HorizontalTimeLineView_Previews: PreviewProvider {
+    static var model:ClockViewModel {
+        let m = ClockViewModel.dummyModel
+        return m
+    }
     static var previews: some View {
-        HorizontalTimeLineView()
+        HorizontalTimeLineView(viewModel:model)
             .padding(40)
             .frame(maxWidth: .infinity,maxHeight: .infinity)
             .background(Color("TopBackground"))
-            .environmentObject(ClockViewModel.dummyModel)
             .previewDevice(PreviewDevice(rawValue: "iPad Pro (9.7-inch)"))
             
     }
