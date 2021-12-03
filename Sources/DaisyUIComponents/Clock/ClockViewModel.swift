@@ -45,7 +45,7 @@ public class ClockViewModel : ObservableObject, Identifiable {
     @Published public var showClockHourText = true
     @Published public var showItems = true
     @Published public var showTimeSpan = true
-    @Published public var showShadow:Bool = true
+    @Published public var showShadow:Bool = false
     @Published public var secondsHandImage:Image
     @Published public var minutesHandImage:Image
     @Published public var hoursHandImage:Image
