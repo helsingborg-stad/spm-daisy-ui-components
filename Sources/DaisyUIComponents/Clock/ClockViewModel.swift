@@ -1,21 +1,6 @@
 import Foundation
 import SwiftUI
 
-extension Array where Element == ClockItem {
-    func element(for date:Date) -> ClockItem? {
-        var dict = [TimeInterval:ClockItem]()
-        for el in self {
-            dict[abs(el.date.timeIntervalSince(date))] = el
-        }
-        guard let first = dict.sorted(by: { $0.0 < $1.0 }).first?.value else {
-            return nil
-        }
-        guard abs(first.date.timeIntervalSince(date)) < 60 * 60 * 24 * 11 else {
-            return nil
-        }
-        return first
-    }
-}
 public struct ClockItem : Hashable, Identifiable {
     public let id:String
     public var emoji:String
