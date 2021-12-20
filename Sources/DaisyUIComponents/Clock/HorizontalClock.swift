@@ -3,7 +3,7 @@ import SwiftUI
 struct TimeLineFont: ViewModifier {
     var size:CGFloat
     var sizeClass: UserInterfaceSizeClass? = nil
-    var foregroundColor = Color("DefaultTextColor")
+    var foregroundColor:Color
     func body(content:Content) -> some View {
         content
             .font(Font.system(size: sizeClass == .regular ? size : size * 0.85, weight: .heavy, design: Font.Design.rounded))
@@ -193,6 +193,5 @@ struct HorizontalTimeLineView_Previews: PreviewProvider {
             .frame(maxWidth: .infinity,maxHeight: .infinity)
             .background(Color("TopBackground"))
             .previewDevice(PreviewDevice(rawValue: "iPad Pro (9.7-inch)"))
-            
     }
 }
